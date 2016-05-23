@@ -7,19 +7,24 @@ import           Lexer
 import           Text.Megaparsec
 import           Text.Megaparsec.String
 
-warpParser :: Parser Exp
+warpParser :: Parser Expr
 warpParser = spaceConsumer *> expression <* eof
 
-expression :: Parser Exp
+expression :: Parser Expr
 expression =  warpParens
            $  parseIf
           <|> parseCase
           <|> parseLambda
-          <|> parseLet
+          <|> try parseLet
           <|> parseLetrec
-          <|> parseApplication
+          <|> try parseApplication
           <|> parseVariable
           <|> parseConstant
+
+definition :: Parser Definition
+definition =  warpParens
+           $  parseDVar
+          <|> parseDFun
 
 pattern :: Parser Pattern
 pattern =  warpParens
@@ -27,7 +32,7 @@ pattern =  warpParens
        <|> parseVarP
        <|> parseConsP
 
-parseIf :: Parser Exp
+parseIf :: Parser Expr
 parseIf =
   do void $ keyword "if"
      cond <- warpParens expression
@@ -37,30 +42,59 @@ parseIf =
      exp2 <- warpParens expression
      return $ If cond exp1 exp2
 
-parseCase :: Parser Exp
-parseCase = undefined
+parseCase :: Parser Expr
+parseCase =
+  do void $ keyword "case"
+     var  <- warpParens expression
+     void $ keyword "of"
+     defs <- some $ parseClauses "->"
+     let (p, e) = unzip defs
+         clause = zipWith Clause p e
+      in return $ Case var clause
 
-parseLambda :: Parser Exp
+parseLambda :: Parser Expr
 parseLambda =
-  do void $ keyword "\\"
+  do void $ symbol "\\"
      name <- warpParens identifier
-     void $ keyword "."
+     void $ symbol "."
      expr <- warpParens expression
      return $ Lam (PVar name) expr
 
-parseLet :: Parser Exp
-parseLet = undefined
+parseLet :: Parser Expr
+parseLet =
+  do void $ keyword "let"
+     defs <- some $ parseClauses "="
+     void $ keyword "in"
+     expr <- warpParens expression
+     let (p, e) = unzip defs
+      in return $ Let p e expr
 
-parseLetrec :: Parser Exp
-parseLetrec = undefined
+parseClauses :: String -> Parser (Pattern, Expr)
+parseClauses s = try $
+             do patt <- pattern
+                void $ symbol s
+                expr <- expression
+                return (patt, expr)
 
-parseApplication :: Parser Exp
-parseApplication = undefined
+parseLetrec :: Parser Expr
+parseLetrec =
+  do void $ keyword "letrec"
+     defs <- some $ parseClauses "="
+     void $ keyword "in"
+     expr <- warpParens expression
+     let (p, e) = unzip defs
+      in return $ Letrec p e expr
 
-parseVariable :: Parser Exp
+parseApplication :: Parser Expr
+parseApplication =
+  do var <- try identifier
+     arg <- expression
+     return $ App (Var var) arg
+
+parseVariable :: Parser Expr
 parseVariable = Var <$> warpParens identifier
 
-parseConstant :: Parser Exp
+parseConstant :: Parser Expr
 parseConstant = EInt <$> warpParens integer
 
 parseIntP :: Parser Pattern
@@ -74,3 +108,18 @@ parseConsP =
   do cons <- constructor
      var  <- many (warpParens pattern)
      return $ PCons cons var
+
+parseDVar :: Parser Definition
+parseDVar = try $
+  do var <- warpParens identifier
+     void $ symbol "="
+     expr <- expression
+     return $ DVar var expr
+
+parseDFun :: Parser Definition
+parseDFun = try $
+  do func <- warpParens identifier
+     vars <- many identifier
+     void $ symbol "="
+     expr <- expression
+     return $ DFun func vars expr

@@ -15,42 +15,27 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-<<<<<<< HEAD
   exposed-modules:     Lexer
   build-depends:       base >= 4.7 && < 5
                      , megaparsec >= 4.3.0
-=======
-  exposed-modules:     Lib
-  build-depends:       base >= 4.7 && < 5
->>>>>>> a2993b8... first commit
   default-language:    Haskell2010
 
 executable Cirno-exe
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-<<<<<<< HEAD
   build-depends:       Cirno
                      , base
                      , megaparsec >= 4.3.0
-=======
-  build-depends:       base
-                     , Cirno
->>>>>>> a2993b8... first commit
   default-language:    Haskell2010
 
 test-suite Cirno-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
-<<<<<<< HEAD
   build-depends:       Cirno
                      , base
                      , megaparsec >= 4.3.0
-=======
-  build-depends:       base
-                     , Cirno
->>>>>>> a2993b8... first commit
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 

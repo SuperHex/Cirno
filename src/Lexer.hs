@@ -4,44 +4,31 @@ module Lexer where
 
 import           Control.Monad          (void)
 import           Text.Megaparsec
-import           Text.Megaparsec.Expr
 import qualified Text.Megaparsec.Lexer  as L
 import           Text.Megaparsec.String
 
 type Name = String
 
-data Exp
-  = EInt Integer
-  | Var Name
-  | App Exp
-        Exp
-  | Lam Pattern
-        Exp
-  | Let [(Pattern,Exp)]
-        Exp
-  | Letrec [(Pattern,Exp)]
-           Exp
-  | Fatbar Exp
-           Exp
-  | If Exp
-       Exp
-       Exp
-  | Case Name
-         [Clause]
-  deriving ((Show))
+data Expr = EInt Integer
+          | Var Name
+          | App Expr Expr
+          | Lam Pattern Expr
+          | Let [Pattern] [Expr] Expr
+          | Letrec [Pattern] [Expr] Expr
+          | If Expr Expr Expr
+          | Case Expr [Clause]
+          deriving (Show)
 
-data Pattern
-  = PInt Integer
-  | PVar Name
-  | PCons Name
-          [Pattern]
-  deriving (Show)
+data Pattern = PInt Integer
+             | PVar Name
+             | PCons Name [Pattern]
+             deriving (Show)
 
-data Clause =
-  Clause Name
-         [Name]
-         Exp
-  deriving ((Show))
+data Definition = DVar Name Expr
+                | DFun Name [Name] Expr
+                deriving (Show)
+
+data Clause = Clause Pattern Expr deriving (Show)
 
 spaceConsumer :: Parser ()
 spaceConsumer = L.space
@@ -68,7 +55,7 @@ integer :: Parser Integer
 integer = lexeme L.integer
 
 keywords :: [String]
-keywords = ["if","else","then","do","case","of","return","let","letrec","->"]
+keywords = ["if","else","then","do","case","of","return","let","letrec","in","otherwise"]
 
 keyword :: String -> Parser ()
 keyword w =
