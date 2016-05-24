@@ -17,7 +17,23 @@ data Expr = EInt Integer
           | Letrec [Pattern] [Expr] Expr
           | If Expr Expr Expr
           | Case Expr [Clause]
+          | Op Name
           deriving (Show)
+
+data AriOp = Add
+           | Sub
+           | Mul
+           | Div
+           deriving (Show)
+
+data RelOp = GT
+           | LT
+           | EQ
+           | GE
+           | LE
+            deriving (Show)
+
+data Op = AriOp | RelOp deriving (Show)
 
 data Pattern = PInt Integer
              | PVar Name
@@ -55,7 +71,7 @@ integer :: Parser Integer
 integer = lexeme L.integer
 
 keywords :: [String]
-keywords = ["if","else","then","do","case","of","return","let","letrec","in","otherwise"]
+keywords = ["if","else","then","do","case","of","return","let","letrec","in","otherwise","not"]
 
 keyword :: String -> Parser ()
 keyword w =

@@ -5,6 +5,7 @@ module Parser where
 import           Control.Monad
 import           Lexer
 import           Text.Megaparsec
+import           Text.Megaparsec.Expr
 import           Text.Megaparsec.String
 
 warpParser :: Parser Expr
@@ -12,12 +13,12 @@ warpParser = spaceConsumer *> expression <* eof
 
 expression :: Parser Expr
 expression =  warpParens
-           $  parseIf
+           $  parseApplication
+          <|> parseIf
           <|> parseCase
           <|> parseLambda
           <|> try parseLet
           <|> parseLetrec
-          <|> try parseApplication
           <|> parseVariable
           <|> parseConstant
 
@@ -86,13 +87,25 @@ parseLetrec =
       in return $ Letrec p e expr
 
 parseApplication :: Parser Expr
-parseApplication =
-  do var <- try identifier
-     arg <- expression
-     return $ App (Var var) arg
+parseApplication = makeExprParser expr sep
+  where sep = [ [InfixL ((symbol "$") >> return App)]
+              , [Prefix (symbol "-" >> return (App (Op "Neg")))]
+              , [InfixL (symbol "*" >> return (\a b -> App (App (Op "Mul") a) b))
+                ,InfixL (symbol "/" >> return (\a b -> App (App (Op "Div") a) b))]
+              , [InfixL (symbol "+" >> return (\a b -> App (App (Op "Add") a) b))
+                ,InfixL (symbol "-" >> return (\a b -> App (App (Op "Mul") a) b))]]
+        expr =  parseIf
+            <|> parseCase
+            <|> parseLambda
+            <|> try parseLet
+            <|> parseLetrec
+            <|> parseVariable
+            <|> parseConstant
 
 parseVariable :: Parser Expr
-parseVariable = Var <$> warpParens identifier
+parseVariable =
+  do var <- warpParens identifier
+     (notFollowedBy expression >> return (Var var))
 
 parseConstant :: Parser Expr
 parseConstant = EInt <$> warpParens integer
