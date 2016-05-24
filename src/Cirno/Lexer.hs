@@ -1,6 +1,6 @@
 -- | lexem defination of Cirno.
 
-module Lexer where
+module Cirno.Lexer where
 
 import           Control.Monad          (void)
 import           Text.Megaparsec

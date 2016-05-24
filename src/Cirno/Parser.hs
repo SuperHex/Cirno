@@ -1,9 +1,9 @@
 -- | helper functions for parsing Cirno
 
-module Parser where
+module Cirno.Parser where
 
+import           Cirno.Lexer
 import           Control.Monad
-import           Lexer
 import           Text.Megaparsec
 import           Text.Megaparsec.Expr
 import           Text.Megaparsec.String

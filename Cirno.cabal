@@ -15,7 +15,7 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Lexer
+  exposed-modules:     Cirno.Lexer
   build-depends:       base >= 4.7 && < 5
                      , megaparsec >= 4.3.0
   default-language:    Haskell2010
